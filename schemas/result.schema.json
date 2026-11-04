@@ -1,0 +1,198 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Cross-border consumer-product recall evidence result (draft)",
+  "description": "Design-stage result JSON schema. Not an Apify Actor configuration.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "sku",
+    "status",
+    "coverage",
+    "checkedAuthorities",
+    "matches",
+    "checkedAt",
+    "dataAsOf",
+    "requiresHumanReview"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "sku": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "enum": [
+        "IDENTIFIER_EVIDENCE",
+        "POSSIBLE_MATCH",
+        "NO_EVIDENCE_FOUND",
+        "SOURCE_INCOMPLETE"
+      ]
+    },
+    "coverage": {
+      "enum": [
+        "COMPLETE",
+        "INCOMPLETE"
+      ]
+    },
+    "checkedAuthorities": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "HEALTH_CANADA",
+          "CPSC"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "matches": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "authority",
+          "officialNoticeId",
+          "officialNoticeUrl",
+          "matchType",
+          "matchedFields",
+          "missingEvidence",
+          "requiresHumanReview"
+        ],
+        "properties": {
+          "authority": {
+            "enum": [
+              "HEALTH_CANADA",
+              "CPSC"
+            ]
+          },
+          "officialNoticeId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "officialNoticeUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "matchType": {
+            "enum": [
+              "IDENTIFIER",
+              "POSSIBLE"
+            ]
+          },
+          "matchedFields": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          },
+          "missingEvidence": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          },
+          "requiresHumanReview": {
+            "const": true
+          }
+        }
+      }
+    },
+    "checkedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "dataAsOf": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "requiresHumanReview": {
+      "type": "boolean"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "SOURCE_INCOMPLETE"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "coverage": {
+            "const": "INCOMPLETE"
+          },
+          "requiresHumanReview": {
+            "const": true
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "coverage": {
+            "const": "COMPLETE"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "NO_EVIDENCE_FOUND"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "matches": {
+            "maxItems": 0
+          },
+          "requiresHumanReview": {
+            "const": false
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "enum": [
+              "IDENTIFIER_EVIDENCE",
+              "POSSIBLE_MATCH"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "matches": {
+            "minItems": 1
+          },
+          "requiresHumanReview": {
+            "const": true
+          }
+        }
+      }
+    }
+  ]
+}
